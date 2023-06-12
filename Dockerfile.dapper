@@ -8,6 +8,8 @@ ENV http_proxy=$http_proxy
 ENV https_proxy=$https_proxy
 ENV no_proxy=$no_proxy
 
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+
 RUN apk -U --no-cache add bash git gcc musl-dev docker vim less file curl wget ca-certificates jq linux-headers \
     zlib-dev tar zip squashfs-tools npm coreutils python3 py3-pip openssl-dev libffi-dev libseccomp libseccomp-dev \
     libseccomp-static make libuv-static sqlite-dev sqlite-static libselinux libselinux-dev zlib-dev zlib-static \
@@ -17,7 +19,7 @@ RUN apk -U --no-cache add bash git gcc musl-dev docker vim less file curl wget c
     apk -U --no-cache add mingw-w64-gcc; \
     fi
 
-RUN python3 -m pip install awscli
+RUN python3 -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple awscli
 
 RUN TRIVY_VERSION="0.42.0"                                                                                                                          && \
     if [ "$(go env GOARCH)" = "arm64" ] || [ "$(go env GOARCH)" = "arm" ]; then                                                                        \
@@ -33,7 +35,7 @@ RUN TRIVY_VERSION="0.42.0"                                                      
     fi
 
 # this works for both go 1.17 and 1.18
-RUN GOPROXY=direct go install golang.org/x/tools/cmd/goimports@gopls/v0.11.0
+RUN GOPROXY=https://goproxy.cn go install golang.org/x/tools/cmd/goimports@gopls/v0.11.0
 RUN rm -rf /go/src /go/pkg
 
 RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
