@@ -35,12 +35,21 @@ RUN TRIVY_VERSION="0.42.0"                                                      
     fi
 
 # this works for both go 1.17 and 1.18
-RUN GOPROXY=https://goproxy.cn go install golang.org/x/tools/cmd/goimports@gopls/v0.11.0
+# Block point 01
+# Need to change version string when using GOPROXY to solve PRC network issue. 
+RUN GO111MODULE=on GOPROXY=https://goproxy.cn,direct go install golang.org/x/tools/cmd/goimports@gopls-release-branch.0.11
 RUN rm -rf /go/src /go/pkg
 
-RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
-    curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.51.2;  \
-    fi
+# Block point 02 
+# Easy to crash when working in bad network. 
+# Crash point 01: Failed to downlod install.sh
+# Crash point 02: Failed to install CI deps using install.sh
+
+# RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
+#     curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.51.2;  \
+#     fi
+COPY ./install.sh /install.sh
+RUN /install.sh v1.51.2
 
 ARG SELINUX=true
 ENV SELINUX $SELINUX
@@ -55,6 +64,10 @@ ENV HOME ${DAPPER_SOURCE}
 ENV CROSS true
 ENV STATIC_BUILD true
 WORKDIR ${DAPPER_SOURCE}
+
+# Block point 4. Failed to download gcr.k8s.io deps. 
+RUN go env -w GO111MODULE=on
+RUN go env -w GOPROXY=https://goproxy.cn,direct
 
 ENTRYPOINT ["./scripts/entry.sh"]
 CMD ["ci"]

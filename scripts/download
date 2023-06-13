@@ -15,17 +15,28 @@ export TZ=UTC
 
 umask 022
 rm -rf ${CHARTS_DIR}
-rm -rf ${RUNC_DIR}
-rm -rf ${CONTAINERD_DIR}
+# rm -rf ${RUNC_DIR}
+# rm -rf ${CONTAINERD_DIR}
 mkdir -p ${CHARTS_DIR}
 mkdir -p ${DATA_DIR}
 
-curl --compressed -sfL https://github.com/k3s-io/k3s-root/releases/download/${VERSION_ROOT}/k3s-root-${ARCH}.tar | tar xf -
+# Block point 3 
+# Crash point 1 Failed to download k3s-root-${ARCH}.tar when in bad network.
+curl --compressed -fL https://gh.api.99988866.xyz/https://github.com/k3s-io/k3s-root/releases/download/${VERSION_ROOT}/k3s-root-${ARCH}.tar | tar xf -
+# tar xf $HOME/k3s-root-${ARCH}.tar
 
+# Crash point 2 Failed to clone runc
 git clone --single-branch --branch=${VERSION_RUNC} --depth=1 https://github.com/opencontainers/runc ${RUNC_DIR}
+# mkdir -p ${RUNC_DIR}
+# cp -r $HOME/runc/* ${RUNC_DIR}
 
+# Crash point 3 Failed to clone containerd
 git clone --single-branch --branch=${VERSION_CONTAINERD} --depth=1 https://github.com/k3s-io/containerd ${CONTAINERD_DIR}
 
+# mkdir -p ${CONTAINERD_DIR}
+# cp -r $HOME/containerd/* ${CONTAINERD_DIR}
+
+# Crash point 4 Failed to download deps.
 for CHART_FILE in $(grep -rlF HelmChart manifests/ | xargs yq eval --no-doc .spec.chart | xargs -n1 basename); do
   CHART_NAME=$(echo $CHART_FILE | grep -oE '^(-*[a-z])+')
   curl -sfL ${CHARTS_URL}/${CHART_NAME}/${CHART_FILE} -o ${CHARTS_DIR}/${CHART_FILE}
